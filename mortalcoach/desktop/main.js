@@ -10,7 +10,11 @@ const appUrl = `http://${host}:${port}`;
 let serverProcess = null;
 
 console.log("MortalCoach Electron starting", { root, appUrl });
-app.setPath("userData", path.join(root, "data", "electron-profile"));
+if (app.isPackaged) {
+  app.setPath("userData", path.join(app.getPath("appData"), "MortalCoach"));
+} else {
+  app.setPath("userData", path.join(root, "data", "electron-profile"));
+}
 Menu.setApplicationMenu(null);
 
 function isPortOpen() {
@@ -39,13 +43,28 @@ async function waitUntilReady() {
 
 async function startServerIfNeeded() {
   if (await isPortOpen()) return;
-  const python = process.env.MORTALCOACH_PYTHON || "python";
-  serverProcess = childProcess.spawn(python, ["app.py"], {
-    cwd: root,
-    env: { ...process.env, MORTALCOACH_PORT: String(port) },
-    stdio: "ignore",
-    windowsHide: true,
-  });
+  const env = {
+    ...process.env,
+    MORTALCOACH_PORT: String(port),
+    MORTALCOACH_DATA_DIR: path.join(app.getPath("userData"), "data"),
+  };
+  if (app.isPackaged) {
+    const backend = path.join(process.resourcesPath, "backend", "MortalCoachBackend.exe");
+    serverProcess = childProcess.spawn(backend, [], {
+      cwd: path.dirname(backend),
+      env,
+      stdio: "ignore",
+      windowsHide: true,
+    });
+  } else {
+    const python = process.env.MORTALCOACH_PYTHON || "python";
+    serverProcess = childProcess.spawn(python, ["app.py"], {
+      cwd: root,
+      env,
+      stdio: "ignore",
+      windowsHide: true,
+    });
+  }
   await waitUntilReady();
 }
 

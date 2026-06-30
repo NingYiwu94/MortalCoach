@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import sqlite3
@@ -13,7 +14,7 @@ from official_parser import parse_official_html
 
 
 ROOT = Path(__file__).resolve().parent
-DATA_DIR = ROOT / "data"
+DATA_DIR = Path(os.environ.get("MORTALCOACH_DATA_DIR", ROOT / "data"))
 DB_PATH = DATA_DIR / "mortalcoach.sqlite3"
 BACKUP_DIR = DATA_DIR / "backups"
 

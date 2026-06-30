@@ -2,16 +2,18 @@
 
 这里是 MortalCoach 的应用本体。普通用户不需要直接进入这个目录启动。
 
-请从仓库根目录运行：
+普通玩家请优先下载 GitHub Release 里的安装包，不需要进入这个目录。
+
+如果你在调试源码版，请从仓库根目录运行：
 
 ```powershell
 .\Start-MortalCoach.bat
 ```
 
-首次使用推荐从仓库根目录运行：
+如果你要生成 Windows 安装包，请从仓库根目录运行：
 
 ```powershell
-.\Install-MortalCoach.bat
+.\Package-MortalCoach.bat
 ```
 
 环境检查：
@@ -37,10 +39,16 @@ python -m py_compile app.py db.py scripts/doctor.py
 
 ## 数据位置
 
-本地数据保存在：
+源码版本地数据保存在：
 
 ```text
 mortalcoach/data/
+```
+
+安装包版本地数据保存在：
+
+```text
+%APPDATA%\MortalCoach\data\
 ```
 
 主要包括：

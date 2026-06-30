@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import time
 from pathlib import Path
 
@@ -8,7 +9,8 @@ from reviewer_runner import CONFIG_PATH, DEFAULT_CONFIG, load_config
 
 
 ROOT = Path(__file__).resolve().parent
-PROFILE_DIR = ROOT / "data" / "majsoul_browser_profile"
+DATA_DIR = Path(os.environ.get("MORTALCOACH_DATA_DIR", ROOT / "data"))
+PROFILE_DIR = DATA_DIR / "majsoul_browser_profile"
 
 
 def main() -> None:

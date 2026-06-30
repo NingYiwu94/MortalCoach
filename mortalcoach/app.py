@@ -21,8 +21,11 @@ from reviewer_runner import load_config, review_link
 
 
 ROOT = Path(__file__).resolve().parent
-STATIC = ROOT / "static"
-KILLER_GUI = ROOT.parent / "killer_mortal_gui"
+RESOURCE_ROOT = Path(getattr(sys, "_MEIPASS", ROOT))
+STATIC = RESOURCE_ROOT / "static"
+KILLER_GUI = RESOURCE_ROOT / "killer_mortal_gui"
+if not KILLER_GUI.exists():
+    KILLER_GUI = ROOT.parent / "killer_mortal_gui"
 AUTH_JOB = {
     "running": False,
     "ok": False,
