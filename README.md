@@ -49,6 +49,12 @@ MortalCoach 想做的是：
 
 这种方式不需要你手动安装 Python、Node.js 或 Electron，适合普通玩家。
 
+### 软件更新
+
+安装包版本启动后会自动检查 GitHub Release。发现新版时，左侧会出现“发现新版本”提示，点击“打开下载”即可进入新版安装包下载页。
+
+MortalCoach 不会在后台自动安装更新；下载安装新版安装包后，直接覆盖安装即可，本地牌谱库和训练档案会继续保留在 `%APPDATA%\MortalCoach\data\`。
+
 ### 从源码运行
 
 1. 打开本仓库 GitHub 页面。

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu } = require("electron");
+const { app, BrowserWindow, Menu, ipcMain, shell } = require("electron");
 const childProcess = require("node:child_process");
 const net = require("node:net");
 const path = require("node:path");
@@ -16,6 +16,19 @@ if (app.isPackaged) {
   app.setPath("userData", path.join(root, "data", "electron-profile"));
 }
 Menu.setApplicationMenu(null);
+
+ipcMain.handle("mortalcoach:get-version", () => app.getVersion());
+
+ipcMain.handle("mortalcoach:open-external", async (_event, url) => {
+  const parsed = new URL(String(url || ""));
+  const allowedHost = parsed.hostname === "github.com";
+  const allowedPath = parsed.pathname.startsWith("/NingYiwu94/MortalCoach/releases");
+  if (parsed.protocol !== "https:" || !allowedHost || !allowedPath) {
+    throw new Error("Blocked external URL.");
+  }
+  await shell.openExternal(parsed.toString());
+  return true;
+});
 
 function isPortOpen() {
   return new Promise((resolve) => {
