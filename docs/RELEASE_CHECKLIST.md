@@ -16,8 +16,8 @@
 ## 2. 环境检查
 
 ```powershell
+.\Start-MortalCoach.bat doctor
 cd mortalcoach
-.\MortalCoach.bat doctor
 python -m py_compile app.py db.py scripts/doctor.py
 ```
 
@@ -64,12 +64,6 @@ node --check ..\killer_mortal_gui\boot.js
 
 ## 6. 许可证
 
-发布前需要决定 MortalCoach 本体许可证。
-
-建议候选：
-
-- MIT：最宽松，适合个人开源工具
-- Apache-2.0：更正式，包含专利授权条款
-- 不选择许可证：别人只能查看代码，不能明确复用
+MortalCoach 本体采用 MIT License，根目录需要保留 `LICENSE`。
 
 `killer_mortal_gui/` 自身为 MIT License，需要保留其 LICENSE。

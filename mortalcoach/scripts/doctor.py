@@ -78,7 +78,7 @@ def check_electron() -> bool:
     if electron.exists():
         ok("Electron installed")
         return True
-    warn("Electron is not installed. MortalCoach.bat will try npm install on first run.")
+    warn("Electron is not installed. Start-MortalCoach.bat will try npm install on first run.")
     return True
 
 

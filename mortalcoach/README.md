@@ -1,37 +1,22 @@
 # MortalCoach App
 
-这是 MortalCoach 的应用本体。推荐从上一级目录运行：
+这里是 MortalCoach 的应用本体。普通用户不需要直接进入这个目录启动。
+
+推荐从仓库根目录运行：
 
 ```powershell
-cd ..
 .\Start-MortalCoach.bat
 ```
 
-也可以在当前目录直接运行：
+环境检查：
 
 ```powershell
-.\MortalCoach.bat
+.\Start-MortalCoach.bat doctor
 ```
 
-## 运行方式
+## 开发者运行方式
 
-### 桌面模式
-
-桌面模式使用 Electron 包一层本地网页应用：
-
-```powershell
-.\MortalCoach.bat
-```
-
-首次运行时，如果缺少 Electron，会自动执行：
-
-```powershell
-npm install
-```
-
-### 浏览器模式
-
-如果不想启动 Electron，可以直接运行本地服务：
+如果只想启动本地 Web 服务，可以进入本目录运行：
 
 ```powershell
 python app.py
@@ -43,16 +28,11 @@ python app.py
 http://127.0.0.1:8766
 ```
 
-### 环境检查
+如果想直接调试 Electron：
 
 ```powershell
-.\MortalCoach.bat doctor
-```
-
-或：
-
-```powershell
-npm run doctor
+npm install
+npm run desktop
 ```
 
 ## 依赖

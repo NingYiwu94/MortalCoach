@@ -46,13 +46,12 @@ cd MortalCoach
 .\Start-MortalCoach.bat
 ```
 
-第一次启动时，`MortalCoach.bat` 会在 `mortalcoach/` 下自动运行 `npm install` 安装 Electron。之后会打开桌面窗口。
+第一次启动时，`Start-MortalCoach.bat` 会在 `mortalcoach/` 下自动运行 `npm install` 安装 Electron。之后会打开桌面窗口。
 
 如果启动失败，可运行：
 
 ```powershell
-cd mortalcoach
-.\MortalCoach.bat doctor
+.\Start-MortalCoach.bat doctor
 ```
 
 或使用浏览器模式：
@@ -141,8 +140,8 @@ MortalCoach 集成并适配了 KillerDucky 的 `killer_mortal_gui`：
 ## 发布前检查
 
 ```powershell
+.\Start-MortalCoach.bat doctor
 cd mortalcoach
-.\MortalCoach.bat doctor
 python -m py_compile app.py db.py scripts/doctor.py
 ```
 
