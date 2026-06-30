@@ -161,22 +161,6 @@ MortalCoach 集成并适配了 KillerDucky 的 `killer_mortal_gui`：
 - <https://github.com/Equim-chan/mjai-reviewer>
 - <https://github.com/Equim-chan/Mortal>
 
-## 开发者检查
-
-```powershell
-.\Start-MortalCoach.bat doctor
-cd mortalcoach
-python -m py_compile app.py db.py scripts/doctor.py
-```
-
-如果本机有 Node：
-
-```powershell
-node --check static/app.js
-node --check ..\killer_mortal_gui\index.js
-node --check ..\killer_mortal_gui\boot.js
-```
-
 ## 许可证
 
 MortalCoach 本体采用 MIT License，详见 [LICENSE](LICENSE)。
