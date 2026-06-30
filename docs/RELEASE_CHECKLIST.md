@@ -16,6 +16,7 @@
 ## 2. 环境检查
 
 ```powershell
+.\Install-MortalCoach.bat
 .\Start-MortalCoach.bat doctor
 cd mortalcoach
 python -m py_compile app.py db.py scripts/doctor.py
@@ -34,13 +35,16 @@ node --check ..\killer_mortal_gui\boot.js
 在一个没有 `node_modules/`、没有 `data/` 的目录中测试：
 
 ```powershell
-.\Start-MortalCoach.bat
+.\Install-MortalCoach.bat
 ```
 
 预期：
 
+- 自动检查或安装 Python / Node.js
 - 自动安装 Electron
+- 自动创建桌面快捷方式
 - 自动创建 `mortalcoach/data/`
+- 桌面快捷方式能打开 MortalCoach
 - 打开 MortalCoach 桌面窗口
 - `doctor` 显示项目文件完整
 

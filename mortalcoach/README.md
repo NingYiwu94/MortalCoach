@@ -8,6 +8,12 @@
 .\Start-MortalCoach.bat
 ```
 
+首次使用推荐从仓库根目录运行：
+
+```powershell
+.\Install-MortalCoach.bat
+```
+
 环境检查：
 
 ```powershell
