@@ -32,6 +32,7 @@ Remove-Item -Recurse -Force $PyWork -ErrorAction SilentlyContinue
 Write-Host ""
 Write-Host "[1/4] Installing Python packaging tool..."
 python -m pip install --upgrade pyinstaller
+if ($LASTEXITCODE -ne 0) { throw "pip install pyinstaller failed with exit code $LASTEXITCODE" }
 
 Write-Host ""
 Write-Host "[2/4] Building bundled Python backend..."
@@ -49,6 +50,7 @@ try {
     --add-data "$StaticDir;static" `
     --add-data "$KillerGuiDir;killer_mortal_gui" `
     app.py
+  if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed with exit code $LASTEXITCODE" }
 }
 finally {
   Pop-Location
@@ -67,6 +69,7 @@ try {
     $env:ELECTRON_MIRROR = "https://npmmirror.com/mirrors/electron/"
   }
   npm install --no-audit --no-fund
+  if ($LASTEXITCODE -ne 0) { throw "npm install failed with exit code $LASTEXITCODE" }
 }
 finally {
   Pop-Location
@@ -77,6 +80,7 @@ Write-Host "[4/4] Building Windows installer..."
 Push-Location $AppDir
 try {
   npm run dist:win
+  if ($LASTEXITCODE -ne 0) { throw "electron-builder failed with exit code $LASTEXITCODE" }
 }
 finally {
   Pop-Location

@@ -11,6 +11,8 @@ let embeddedOfficialRunning = false;
 let embeddedOfficialBody = null;
 let reviewWebviewReady = false;
 let reviewWebviewTarget = "";
+let learningNoteEditingErrorId = null;
+let learningNoteDirty = false;
 
 const OFFICIAL_URL = "https://mjai.ekyu.moe/zh-cn.html";
 const THEME_STORAGE_KEY = "mortalcoach.theme";
@@ -526,6 +528,7 @@ async function openGameReview(gameId, limit = 9999, errorId = null) {
 }
 
 async function loadReviewData(gameId, limit) {
+  preserveLearningDraft();
   const data = await api(`/api/games/${gameId}/review-data?limit=${limit}&order=chronological`);
   reviewGame = data.game;
   reviewErrors = data.errors || [];
@@ -631,6 +634,7 @@ function renderReviewErrors() {
 
 function setCurrentError(index) {
   if (!reviewErrors.length) return;
+  preserveLearningDraft();
   currentErrorIndex = Math.max(0, Math.min(reviewErrors.length - 1, index));
   renderReviewErrors();
   updateBoard(reviewErrors[currentErrorIndex]);
@@ -642,6 +646,7 @@ function updateCurrentErrorFromEmbedded(index) {
   if (!reviewErrors.length) return;
   const nextIndex = Math.max(0, Math.min(reviewErrors.length - 1, Number(index)));
   if (nextIndex === currentErrorIndex) return;
+  preserveLearningDraft();
   currentErrorIndex = nextIndex;
   renderReviewErrors();
   updateBoard(reviewErrors[currentErrorIndex]);
@@ -761,6 +766,7 @@ function syncMarkButton() {
 
 function renderInspector(err) {
   if (!$("inspectorRank")) return;
+  const noteInput = $("learningNoteInput");
   if (!err) {
     $("inspectorRank").textContent = "--";
     $("inspectorTitle").textContent = "选择一个错误开始复盘";
@@ -771,10 +777,19 @@ function renderInspector(err) {
     $("inspectorActual").textContent = "--";
     $("inspectorExpected").textContent = "--";
     $("learningStatusInput").value = "new";
-    $("learningNoteInput").value = "";
+    if (noteInput) noteInput.value = "";
+    learningNoteEditingErrorId = null;
+    learningNoteDirty = false;
     $("learningSaveStatus").textContent = "";
     return;
   }
+  const errorId = Number(err.error_id || 0);
+  const shouldKeepDraft = (
+    noteInput &&
+    learningNoteDirty &&
+    learningNoteEditingErrorId === errorId &&
+    document.activeElement === noteInput
+  );
   $("inspectorRank").textContent = `#${currentErrorIndex + 1}`;
   $("inspectorTitle").textContent = `${err.round} · ${err.junme ?? "?"} 巡`;
   $("inspectorMeta").textContent = `剩余 ${err.tiles_left ?? "--"} · ${err.marked ? "已加入错题库" : "未收藏"}`;
@@ -784,25 +799,42 @@ function renderInspector(err) {
   $("inspectorActual").textContent = actionText(err.actual) || "--";
   $("inspectorExpected").textContent = actionText(err.expected) || "--";
   $("learningStatusInput").value = normalizeLearningStatus(err.learning_status);
-  $("learningNoteInput").value = err.user_note || "";
-  $("learningSaveStatus").textContent = err.last_reviewed_at ? `上次复盘：${err.last_reviewed_at}` : "";
+  if (noteInput && !shouldKeepDraft) {
+    noteInput.value = err.user_note || "";
+    learningNoteEditingErrorId = errorId;
+    learningNoteDirty = false;
+  }
+  if (!learningNoteDirty) {
+    $("learningSaveStatus").textContent = err.last_reviewed_at ? `上次复盘：${err.last_reviewed_at}` : "";
+  }
 }
 
 async function saveCurrentLearning(extra = {}) {
   const err = reviewErrors[currentErrorIndex];
   if (!err?.error_id) return;
+  const noteInput = $("learningNoteInput");
   const updated = await api(`/api/errors/${err.error_id}/learning`, {
     method: "POST",
     body: JSON.stringify({
-      note: $("learningNoteInput")?.value || "",
+      note: noteInput?.value || "",
       status: normalizeLearningStatus($("learningStatusInput")?.value),
       ...extra,
     }),
   });
   Object.assign(err, updated);
+  learningNoteEditingErrorId = Number(updated.error_id || err.error_id || 0);
+  learningNoteDirty = false;
   renderInspector(err);
   syncMarkButton();
   $("learningSaveStatus").textContent = "已保存";
+}
+
+function preserveLearningDraft() {
+  const err = reviewErrors[currentErrorIndex];
+  const noteInput = $("learningNoteInput");
+  if (!err?.error_id || !noteInput || !learningNoteDirty) return;
+  if (learningNoteEditingErrorId !== Number(err.error_id)) return;
+  err.user_note = noteInput.value;
 }
 
 function createTileElement(tile) {
@@ -1846,6 +1878,19 @@ $("markCurrentBtn").onclick = async () => {
 };
 $("saveLearningBtn").onclick = () => saveCurrentLearning().catch((err) => alert(err.message));
 $("reviewedOnceBtn").onclick = () => saveCurrentLearning({ reviewed: true, status: normalizeLearningStatus($("learningStatusInput").value) }).catch((err) => alert(err.message));
+if ($("learningNoteInput")) {
+  $("learningNoteInput").addEventListener("focus", () => {
+    const err = reviewErrors[currentErrorIndex];
+    learningNoteEditingErrorId = Number(err?.error_id || 0);
+  });
+  $("learningNoteInput").addEventListener("input", () => {
+    const err = reviewErrors[currentErrorIndex];
+    learningNoteEditingErrorId = Number(err?.error_id || 0);
+    learningNoteDirty = true;
+    if (err?.error_id) err.user_note = $("learningNoteInput").value;
+    if ($("learningSaveStatus")) $("learningSaveStatus").textContent = "未保存";
+  });
+}
 $("reviewLimitInput").onchange = () => {
   if (reviewGame) {
     currentErrorIndex = 0;

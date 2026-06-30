@@ -1,6 +1,6 @@
 {
   "name": "mortalcoach",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Local Mortal review archive and replay manager",
   "private": true,
   "main": "desktop/main.js",
