@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import shutil
 import sqlite3
 import sys
@@ -65,11 +66,22 @@ def check_database() -> bool:
 def check_node() -> bool:
     node = shutil.which("node")
     npm = shutil.which("npm")
+    common_node = Path(r"C:\Program Files\nodejs\node.exe")
+    common_npm = Path(r"C:\Program Files\nodejs\npm.cmd")
+    if (not node or not npm) and common_node.exists() and common_npm.exists():
+        node = str(common_node)
+        npm = str(common_npm)
     if node and npm:
         ok(f"Node: {node}")
         ok(f"npm: {npm}")
         return True
     warn("Node/npm not found. Electron desktop launch needs Node.js; browser mode can still use python app.py.")
+    return True
+
+
+def check_electron_env() -> bool:
+    if os.environ.get("ELECTRON_RUN_AS_NODE"):
+        warn("ELECTRON_RUN_AS_NODE is set in the environment. Start-MortalCoach.bat clears it before launching Electron.")
     return True
 
 
@@ -88,6 +100,7 @@ def main() -> int:
         check_files(),
         check_database(),
         check_node(),
+        check_electron_env(),
         check_electron(),
     ]
     return 0 if all(checks) else 1

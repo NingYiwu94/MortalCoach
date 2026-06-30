@@ -1,8 +1,12 @@
 @echo off
 setlocal
-cd /d "%~dp0mortalcoach"
+pushd "%~dp0mortalcoach" || (
+  echo Failed to enter MortalCoach app directory.
+  exit /b 1
+)
 
-set ELECTRON_RUN_AS_NODE=
+set "ELECTRON_RUN_AS_NODE="
+if not defined ELECTRON_MIRROR set "ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/"
 
 if /I "%~1"=="doctor" goto doctor
 
@@ -14,13 +18,14 @@ if not exist "%NPM_EXE%" set "NPM_EXE=npm"
 
 if exist package.json (
   if not exist node_modules\electron\dist\electron.exe (
-    "%NPM_EXE%" install
+    echo Installing Electron dependencies. This may take a while on first launch...
+    "%NPM_EXE%" install --no-audit --no-fund
     if errorlevel 1 goto fallback
   )
   if exist node_modules\electron\dist\electron.exe (
-    "%NODE_EXE%" node_modules\electron\cli.js .
+    node_modules\electron\dist\electron.exe .
   ) else (
-    "%NPM_EXE%" start
+    goto fallback
   )
   if errorlevel 1 goto fallback
   goto end
@@ -32,12 +37,13 @@ echo MortalCoach desktop launch failed or Electron is unavailable.
 echo Falling back to browser mode through Python.
 echo Run "Start-MortalCoach.bat doctor" to check the local environment.
 echo.
-python launch.py
+python "%CD%\launch.py"
 goto end
 
 :doctor
-python scripts\doctor.py
+python "%CD%\scripts\doctor.py"
 pause
 
 :end
+popd
 endlocal
