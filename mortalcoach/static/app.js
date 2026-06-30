@@ -16,8 +16,7 @@ let learningNoteDirty = false;
 
 const OFFICIAL_URL = "https://mjai.ekyu.moe/zh-cn.html";
 const THEME_STORAGE_KEY = "mortalcoach.theme";
-const UPDATE_DISMISS_KEY = "mortalcoach.dismissedUpdateTag";
-const RELEASES_API_URL = "https://api.github.com/repos/NingYiwu94/MortalCoach/releases/latest";
+const UPDATE_DISMISS_KEY = "mortalcoach.dismissedUpdateVersion";
 const $ = (id) => document.getElementById(id);
 
 function getAppTheme() {
@@ -53,56 +52,74 @@ function syncReviewTheme() {
   }
 }
 
-function parseVersionParts(version) {
-  return String(version || "")
-    .trim()
-    .replace(/^v/i, "")
-    .split(/[.-]/)
-    .map((part) => {
-      const value = Number.parseInt(part, 10);
-      return Number.isFinite(value) ? value : 0;
-    });
-}
-
-function compareVersions(left, right) {
-  const a = parseVersionParts(left);
-  const b = parseVersionParts(right);
-  const length = Math.max(a.length, b.length, 3);
-  for (let i = 0; i < length; i += 1) {
-    const delta = (a[i] || 0) - (b[i] || 0);
-    if (delta !== 0) return delta;
-  }
-  return 0;
-}
-
-function getReleaseDownloadUrl(release) {
-  const assets = Array.isArray(release?.assets) ? release.assets : [];
-  const installer = assets.find((asset) => /MortalCoach-Setup-.*\.exe$/i.test(asset.name || ""));
-  return installer?.browser_download_url || release?.html_url || "https://github.com/NingYiwu94/MortalCoach/releases/latest";
-}
-
 function hideUpdateNotice() {
   $("updateNotice")?.classList.add("hidden");
 }
 
-function showUpdateNotice({ currentVersion, latestVersion, downloadUrl, releaseUrl }) {
+function renderUpdateNotice(payload = {}) {
   const notice = $("updateNotice");
   if (!notice) return;
-  $("updateNoticeText").textContent = `当前 ${currentVersion}，最新 ${latestVersion}。`;
-  notice.dataset.downloadUrl = downloadUrl || releaseUrl || "";
-  notice.dataset.releaseTag = latestVersion || "";
-  notice.classList.remove("hidden");
-}
+  const primaryBtn = $("openUpdateBtn");
+  const dismissBtn = $("dismissUpdateBtn");
+  const text = $("updateNoticeText");
+  const title = notice.querySelector("strong");
+  const status = payload.status || "idle";
+  const version = payload.version || payload.updateInfo?.version || "";
 
-async function openUpdateDownload() {
-  const notice = $("updateNotice");
-  const url = notice?.dataset.downloadUrl;
-  if (!url) return;
-  if (window.mortalCoachElectron?.openExternal) {
-    await window.mortalCoachElectron.openExternal(url);
-  } else {
-    window.open(url, "_blank", "noopener,noreferrer");
+  notice.dataset.updateStatus = status;
+  notice.dataset.releaseTag = version || "";
+  notice.classList.remove("update-available", "update-downloading", "update-downloaded", "update-error");
+  if (primaryBtn) primaryBtn.disabled = false;
+  if (dismissBtn) dismissBtn.classList.remove("hidden");
+
+  if (status === "available") {
+    if (localStorage.getItem(UPDATE_DISMISS_KEY) === version) return;
+    if (title) title.textContent = "发现新版本";
+    if (text) text.textContent = `当前 ${payload.currentVersion || "--"}，最新 ${version || "--"}。`;
+    if (primaryBtn) primaryBtn.textContent = "下载更新";
+    notice.classList.add("update-available");
+    notice.classList.remove("hidden");
+    return;
   }
+
+  if (status === "downloading") {
+    if (title) title.textContent = "正在下载更新";
+    if (text) text.textContent = `已下载 ${Math.round(payload.percent || 0)}%，下载完成后即可重启更新。`;
+    if (primaryBtn) {
+      primaryBtn.textContent = "下载中...";
+      primaryBtn.disabled = true;
+    }
+    if (dismissBtn) dismissBtn.classList.add("hidden");
+    notice.classList.add("update-downloading");
+    notice.classList.remove("hidden");
+    return;
+  }
+
+  if (status === "downloaded") {
+    if (title) title.textContent = "更新已下载";
+    if (text) text.textContent = `点击重启并更新到 ${version || "新版"}。`;
+    if (primaryBtn) primaryBtn.textContent = "重启并更新";
+    if (dismissBtn) dismissBtn.classList.add("hidden");
+    notice.classList.add("update-downloaded");
+    notice.classList.remove("hidden");
+    return;
+  }
+
+  if (status === "error") {
+    if (title) title.textContent = "更新失败";
+    if (text) text.textContent = payload.message || "请稍后重试，或到 GitHub Release 手动下载。";
+    if (primaryBtn) primaryBtn.textContent = "重新检查";
+    notice.classList.add("update-error");
+    notice.classList.remove("hidden");
+    return;
+  }
+
+  if (status === "dev") {
+    hideUpdateNotice();
+    return;
+  }
+
+  if (status === "not-available") hideUpdateNotice();
 }
 
 function dismissUpdateNotice() {
@@ -111,23 +128,28 @@ function dismissUpdateNotice() {
   hideUpdateNotice();
 }
 
-async function checkForUpdates() {
-  if (!window.mortalCoachElectron?.getVersion) return;
-  const currentVersion = await window.mortalCoachElectron.getVersion();
-  const release = await fetch(RELEASES_API_URL, { cache: "no-store" }).then((res) => {
-    if (!res.ok) throw new Error(`GitHub Release check failed: ${res.status}`);
-    return res.json();
-  });
-  if (release?.draft || release?.prerelease || !release?.tag_name) return;
-  const latestVersion = String(release.tag_name).replace(/^v/i, "");
-  if (compareVersions(latestVersion, currentVersion) <= 0) return;
-  if (localStorage.getItem(UPDATE_DISMISS_KEY) === latestVersion) return;
-  showUpdateNotice({
-    currentVersion,
-    latestVersion,
-    downloadUrl: getReleaseDownloadUrl(release),
-    releaseUrl: release.html_url,
-  });
+async function handleUpdatePrimaryAction() {
+  const electron = window.mortalCoachElectron;
+  if (!electron?.checkForUpdates) return;
+  const status = $("updateNotice")?.dataset.updateStatus;
+  if (status === "available") {
+    await electron.downloadUpdate();
+    return;
+  }
+  if (status === "downloaded") {
+    await electron.installUpdate();
+    return;
+  }
+  await electron.checkForUpdates();
+}
+
+function initAutoUpdates() {
+  const electron = window.mortalCoachElectron;
+  if (!electron?.checkForUpdates) return;
+  if (electron.onUpdateStatus) {
+    electron.onUpdateStatus((payload) => renderUpdateNotice(payload));
+  }
+  electron.checkForUpdates().catch(() => {});
 }
 
 async function api(path, options = {}) {
@@ -1964,7 +1986,7 @@ function sleep(ms) {
 }
 
 $("refreshBtn").onclick = () => Promise.all([loadGames(), loadMarks(), loadProfile()]).catch((err) => alert(err.message));
-if ($("openUpdateBtn")) $("openUpdateBtn").onclick = () => openUpdateDownload().catch((err) => alert(err.message));
+if ($("openUpdateBtn")) $("openUpdateBtn").onclick = () => handleUpdatePrimaryAction().catch((err) => renderUpdateNotice({ status: "error", message: err.message }));
 if ($("dismissUpdateBtn")) $("dismissUpdateBtn").onclick = dismissUpdateNotice;
 $("officialBtn").onclick = () => startOfficialReview().catch((err) => alert(err.message));
 $("saveProfileBtn").onclick = () => saveProfile().catch((err) => alert(err.message));
@@ -2092,5 +2114,5 @@ window.addEventListener("keydown", (event) => {
 applyAppTheme();
 Promise.all([loadGames(), loadMarks(), loadProfile()]).catch((err) => alert(err.message));
 loadOfficialStatus().catch((err) => ($("officialStatus").textContent = err.message));
-checkForUpdates().catch(() => {});
+initAutoUpdates();
 setInterval(() => loadOfficialStatus().catch(() => {}), 3000);

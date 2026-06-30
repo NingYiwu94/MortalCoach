@@ -76,6 +76,7 @@ node --check ..\killer_mortal_gui\boot.js
 ## 7. GitHub Release
 
 - 上传 `release/MortalCoach-Setup-*.exe`
+- 上传 `release/MortalCoach-Setup-*.exe.blockmap` 和 `release/latest.yml`，这两个文件是 electron-updater 自动更新必需的元数据
 - Release 标题使用版本号，例如 `MortalCoach v0.1.0`
 - Release 说明包含：
   - 推荐 Windows 10 / 11

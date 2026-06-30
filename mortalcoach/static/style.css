@@ -2728,6 +2728,11 @@ body.theme-light *::-webkit-scrollbar-corner {
   font-size: 12px;
 }
 
+.update-actions button:disabled {
+  cursor: default;
+  opacity: 0.72;
+}
+
 .update-actions .ghost-btn {
   border: 1px solid #1f6c73;
   background: transparent;

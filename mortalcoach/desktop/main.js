@@ -1,4 +1,5 @@
 const { app, BrowserWindow, Menu, ipcMain, shell } = require("electron");
+const { autoUpdater } = require("electron-updater");
 const childProcess = require("node:child_process");
 const net = require("node:net");
 const path = require("node:path");
@@ -8,6 +9,8 @@ const host = "127.0.0.1";
 const port = Number(process.env.MORTALCOACH_PORT || "8766");
 const appUrl = `http://${host}:${port}`;
 let serverProcess = null;
+let mainWindow = null;
+let updateCheckInFlight = false;
 
 console.log("MortalCoach Electron starting", { root, appUrl });
 if (app.isPackaged) {
@@ -27,6 +30,97 @@ ipcMain.handle("mortalcoach:open-external", async (_event, url) => {
     throw new Error("Blocked external URL.");
   }
   await shell.openExternal(parsed.toString());
+  return true;
+});
+
+function sendUpdateStatus(payload) {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  mainWindow.webContents.send("mortalcoach:update-status", {
+    currentVersion: app.getVersion(),
+    ...payload,
+  });
+}
+
+autoUpdater.autoDownload = false;
+autoUpdater.autoInstallOnAppQuit = false;
+
+autoUpdater.on("checking-for-update", () => {
+  sendUpdateStatus({ status: "checking" });
+});
+
+autoUpdater.on("update-available", (info) => {
+  sendUpdateStatus({
+    status: "available",
+    version: info?.version || "",
+    releaseName: info?.releaseName || "",
+  });
+});
+
+autoUpdater.on("update-not-available", (info) => {
+  sendUpdateStatus({
+    status: "not-available",
+    version: info?.version || app.getVersion(),
+  });
+});
+
+autoUpdater.on("download-progress", (progress) => {
+  sendUpdateStatus({
+    status: "downloading",
+    percent: Math.max(0, Math.min(100, Math.round(progress?.percent || 0))),
+    transferred: progress?.transferred || 0,
+    total: progress?.total || 0,
+  });
+});
+
+autoUpdater.on("update-downloaded", (info) => {
+  sendUpdateStatus({
+    status: "downloaded",
+    version: info?.version || "",
+  });
+});
+
+autoUpdater.on("error", (error) => {
+  sendUpdateStatus({
+    status: "error",
+    message: error?.message || String(error || "Update failed."),
+  });
+});
+
+ipcMain.handle("mortalcoach:check-for-updates", async () => {
+  if (!app.isPackaged) {
+    const payload = { status: "dev", currentVersion: app.getVersion() };
+    sendUpdateStatus(payload);
+    return payload;
+  }
+  if (updateCheckInFlight) {
+    return { status: "checking", currentVersion: app.getVersion() };
+  }
+  updateCheckInFlight = true;
+  try {
+    sendUpdateStatus({ status: "checking" });
+    const result = await autoUpdater.checkForUpdates();
+    return {
+      status: "checked",
+      currentVersion: app.getVersion(),
+      updateInfo: result?.updateInfo || null,
+    };
+  } finally {
+    updateCheckInFlight = false;
+  }
+});
+
+ipcMain.handle("mortalcoach:download-update", async () => {
+  if (!app.isPackaged) {
+    return { status: "dev", currentVersion: app.getVersion() };
+  }
+  sendUpdateStatus({ status: "downloading", percent: 0 });
+  await autoUpdater.downloadUpdate();
+  return { status: "download-started", currentVersion: app.getVersion() };
+});
+
+ipcMain.handle("mortalcoach:install-update", () => {
+  if (!app.isPackaged) return false;
+  autoUpdater.quitAndInstall(false, true);
   return true;
 });
 
@@ -100,9 +194,17 @@ async function createWindow() {
       webviewTag: true,
     },
   });
+  mainWindow = win;
   win.setMenuBarVisibility(false);
   await win.loadURL(appUrl);
   console.log("MortalCoach window loaded.");
+}
+
+function stopServer() {
+  if (serverProcess) {
+    serverProcess.kill();
+    serverProcess = null;
+  }
 }
 
 app.whenReady().then(createWindow).catch((error) => {
@@ -110,10 +212,9 @@ app.whenReady().then(createWindow).catch((error) => {
   app.quit();
 });
 
+app.on("before-quit", stopServer);
+
 app.on("window-all-closed", () => {
-  if (serverProcess) {
-    serverProcess.kill();
-    serverProcess = null;
-  }
+  stopServer();
   app.quit();
 });
