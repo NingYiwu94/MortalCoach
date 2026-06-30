@@ -1,12 +1,9 @@
 # Screenshots
 
-Put GitHub README screenshots here.
+GitHub README currently uses:
 
-Recommended files:
-
-- `overview.png`
-- `library.png`
-- `replay-dark.png`
-- `replay-light.png`
-
-After adding screenshots, uncomment the image block in the root `README.md`.
+- `首页总览.png`
+- `评分曲线.png`
+- `牌谱库截图.png`
+- `复盘视角截图.png`
+- `错题库截图.png`
