@@ -2758,3 +2758,41 @@ body.theme-light .update-actions .ghost-btn {
 body.theme-light .update-actions .ghost-btn:hover {
   background: #edf4f3;
 }
+
+/* Review inspector action feedback */
+#saveLearningBtn.save-feedback,
+#markCurrentBtn.save-feedback {
+  background: #20b99a !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(32, 185, 154, 0.18);
+}
+
+.note-input.note-saved-flash {
+  animation: noteSavedFlash 900ms ease-out;
+}
+
+@keyframes noteSavedFlash {
+  0% {
+    border-color: #20b99a;
+    box-shadow: 0 0 0 3px rgba(32, 185, 154, 0.2);
+  }
+  100% {
+    border-color: var(--line);
+    box-shadow: none;
+  }
+}
+
+body.theme-light .note-input.note-saved-flash {
+  animation-name: noteSavedFlashLight;
+}
+
+@keyframes noteSavedFlashLight {
+  0% {
+    border-color: #16866f;
+    box-shadow: 0 0 0 3px rgba(22, 134, 111, 0.16);
+  }
+  100% {
+    border-color: var(--line);
+    box-shadow: none;
+  }
+}

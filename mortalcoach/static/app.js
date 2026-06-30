@@ -838,9 +838,31 @@ function renderChoice(id, text) {
 function syncMarkButton() {
   const btn = $("markCurrentBtn");
   const err = reviewErrors[currentErrorIndex];
+  if (!btn) return;
   btn.disabled = !err?.error_id;
   btn.classList.toggle("marked", Boolean(err?.marked));
   btn.textContent = err?.marked ? "移出错题库" : "加入错题库";
+}
+
+function showLearningSavedFeedback() {
+  const btn = $("saveLearningBtn");
+  const noteInput = $("learningNoteInput");
+  const status = $("learningSaveStatus");
+  if (status) status.textContent = "备注已修改";
+  if (noteInput) {
+    noteInput.classList.remove("note-saved-flash");
+    void noteInput.offsetWidth;
+    noteInput.classList.add("note-saved-flash");
+  }
+  if (!btn) return;
+  btn.classList.remove("save-feedback");
+  void btn.offsetWidth;
+  btn.classList.add("save-feedback");
+  btn.textContent = "已修改";
+  window.setTimeout(() => {
+    btn.classList.remove("save-feedback");
+    btn.textContent = "修改备注";
+  }, 1200);
 }
 
 function renderInspector(err) {
@@ -905,7 +927,7 @@ async function saveCurrentLearning(extra = {}) {
   learningNoteDirty = false;
   renderInspector(err);
   syncMarkButton();
-  $("learningSaveStatus").textContent = "已保存";
+  showLearningSavedFeedback();
 }
 
 function preserveLearningDraft() {
@@ -1953,12 +1975,19 @@ $("errorJumpInput").onchange = () => setCurrentError(Number($("errorJumpInput").
 $("markCurrentBtn").onclick = async () => {
   const err = reviewErrors[currentErrorIndex];
   if (!err?.error_id || !reviewGame) return;
+  const wasMarked = Boolean(err.marked);
   await api(`/api/errors/${err.error_id}/mark`, { method: "POST", body: "{}" });
   await loadReviewData(reviewGame.id, Number($("reviewLimitInput").value));
   await loadMarks();
+  const btn = $("markCurrentBtn");
+  if (btn) {
+    btn.classList.remove("save-feedback");
+    void btn.offsetWidth;
+    btn.classList.add("save-feedback");
+  }
+  if ($("learningSaveStatus")) $("learningSaveStatus").textContent = wasMarked ? "已移出错题库" : "已加入错题库";
 };
 $("saveLearningBtn").onclick = () => saveCurrentLearning().catch((err) => alert(err.message));
-$("reviewedOnceBtn").onclick = () => saveCurrentLearning({ reviewed: true, status: normalizeLearningStatus($("learningStatusInput").value) }).catch((err) => alert(err.message));
 if ($("learningNoteInput")) {
   $("learningNoteInput").addEventListener("focus", () => {
     const err = reviewErrors[currentErrorIndex];
@@ -1969,7 +1998,7 @@ if ($("learningNoteInput")) {
     learningNoteEditingErrorId = Number(err?.error_id || 0);
     learningNoteDirty = true;
     if (err?.error_id) err.user_note = $("learningNoteInput").value;
-    if ($("learningSaveStatus")) $("learningSaveStatus").textContent = "未保存";
+    if ($("learningSaveStatus")) $("learningSaveStatus").textContent = "有未保存修改";
   });
 }
 $("reviewLimitInput").onchange = () => {
