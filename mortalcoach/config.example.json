@@ -1,0 +1,10 @@
+{
+  "mjai_reviewer": "mjai-reviewer",
+  "mortal_exe": "mortal",
+  "mortal_cfg": "path/to/mortal/config.toml",
+  "node": "node",
+  "tensoul_dir": "./vendor/tensoul",
+  "majsoul_base": "https://game.maj-soul.com",
+  "majsoul_gateway": "",
+  "access_token": ""
+}

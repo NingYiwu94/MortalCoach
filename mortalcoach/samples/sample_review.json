@@ -1,0 +1,80 @@
+{
+  "engine": "mortal",
+  "review": {
+    "total_reviewed": 4,
+    "total_matches": 2,
+    "rating": 0.72,
+    "temperature": 0.1,
+    "model_tag": "sample-mortal",
+    "relative_phi_matrix": [],
+    "kyokus": [
+      {
+        "kyoku": 0,
+        "honba": 0,
+        "relative_scores": [25000, 25000, 25000, 25000],
+        "end_status": [],
+        "entries": [
+          {
+            "junme": 5,
+            "tiles_left": 51,
+            "last_actor": 0,
+            "tile": "7p",
+            "state": {},
+            "expected": {"type": "dahai", "actor": 0, "pai": "9m", "tsumogiri": false},
+            "actual": {"type": "dahai", "actor": 0, "pai": "7p", "tsumogiri": true},
+            "is_equal": false,
+            "shanten": 2,
+            "at_furiten": false,
+            "actual_index": 2,
+            "details": [
+              {"action": {"type": "dahai", "actor": 0, "pai": "9m"}, "q_value": 0.43, "prob": 0.72},
+              {"action": {"type": "dahai", "actor": 0, "pai": "1s"}, "q_value": 0.18, "prob": 0.2},
+              {"action": {"type": "dahai", "actor": 0, "pai": "7p"}, "q_value": -0.12, "prob": 0.08}
+            ]
+          },
+          {
+            "junme": 9,
+            "tiles_left": 35,
+            "last_actor": 0,
+            "tile": "3s",
+            "state": {},
+            "expected": {"type": "dahai", "actor": 0, "pai": "3s", "tsumogiri": true},
+            "actual": {"type": "dahai", "actor": 0, "pai": "3s", "tsumogiri": true},
+            "is_equal": true,
+            "shanten": 1,
+            "at_furiten": false,
+            "actual_index": 0,
+            "details": [
+              {"action": {"type": "dahai", "actor": 0, "pai": "3s"}, "q_value": 0.31, "prob": 0.88}
+            ]
+          }
+        ]
+      },
+      {
+        "kyoku": 1,
+        "honba": 1,
+        "relative_scores": [23000, 27000, 26000, 24000],
+        "end_status": [],
+        "entries": [
+          {
+            "junme": 12,
+            "tiles_left": 24,
+            "last_actor": 0,
+            "tile": "5m",
+            "state": {},
+            "expected": {"type": "none"},
+            "actual": {"type": "pon", "actor": 0, "target": 3, "pai": "5m"},
+            "is_equal": false,
+            "shanten": 1,
+            "at_furiten": false,
+            "actual_index": 1,
+            "details": [
+              {"action": {"type": "none"}, "q_value": 0.24, "prob": 0.65},
+              {"action": {"type": "pon", "actor": 0, "target": 3, "pai": "5m"}, "q_value": -0.33, "prob": 0.35}
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

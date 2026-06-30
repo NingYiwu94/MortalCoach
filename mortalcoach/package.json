@@ -1,0 +1,15 @@
+{
+  "name": "mortalcoach",
+  "version": "0.1.0",
+  "description": "Local Mortal review archive and replay manager",
+  "private": true,
+  "main": "desktop/main.js",
+  "scripts": {
+    "start": "electron .",
+    "desktop": "electron .",
+    "doctor": "python scripts/doctor.py"
+  },
+  "devDependencies": {
+    "electron": "^31.7.7"
+  }
+}

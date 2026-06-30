@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MortalCoach</title>
+  <link rel="stylesheet" href="/style.css?v=49">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-block">
+        <h1>MortalCoach</h1>
+        <p>个人麻将复盘工作台</p>
+      </div>
+      <nav class="side-nav">
+        <button class="nav-btn active" data-view="dashboardView" type="button">总览</button>
+        <button class="nav-btn" data-view="libraryView" type="button">牌谱库</button>
+        <button class="nav-btn" data-view="mistakesView" type="button">错题库</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <label class="theme-control">
+          <span>界面主题</span>
+          <select id="themeInput" aria-label="界面主题">
+            <option value="dark">深色</option>
+            <option value="light">浅色</option>
+          </select>
+        </label>
+        <button id="refreshBtn" class="sidebar-refresh" type="button">刷新数据</button>
+      </div>
+    </aside>
+
+    <section class="app-main">
+      <main id="dashboardView" class="view dashboard-grid">
+        <section class="panel import-panel">
+          <div class="section-head">
+            <div>
+              <h2>提交牌谱</h2>
+              <p class="hint">粘贴雀魂或天凤牌谱链接，MortalCoach 会在内嵌官方 Mortal 中提交并保存结果。</p>
+            </div>
+          </div>
+          <label>
+            Mortal 模型
+            <select id="modelInput">
+              <option value="4.1b" selected>4.1b balanced</option>
+              <option value="4.1c">4.1c aggressive</option>
+              <option value="4.1a">4.1a defensive</option>
+              <option value="4.0">4.0 legacy</option>
+              <option value="3.0">3.0 human-like</option>
+            </select>
+          </label>
+          <label>
+            牌谱链接
+            <textarea id="mainInput" spellcheck="false" placeholder="雀魂牌譜:https://game.maj-soul.com/1/?paipu=...
+https://tenhou.net/0/?log=...&tw=2"></textarea>
+          </label>
+          <button id="officialBtn" type="button">开始 Mortal 分析并保存</button>
+          <div id="officialStatus" class="status-box">尚未运行官方 Mortal 自动分析。</div>
+        </section>
+
+        <section class="panel profile-panel">
+          <div class="section-head">
+            <div>
+              <h2>训练档案</h2>
+              <p class="hint">按平台保存训练档案。雀魂统计已经接入，天凤统计入口先保留。</p>
+            </div>
+          </div>
+          <div class="profile-tabs" role="tablist" aria-label="训练档案平台">
+            <button class="profile-tab active" data-profile-tab="majsoul" type="button">雀魂</button>
+            <button class="profile-tab" data-profile-tab="tenhou" type="button">天凤</button>
+          </div>
+          <section id="majsoulProfilePane" class="profile-pane">
+            <div class="profile-grid single">
+              <label>
+                雀魂 ID
+                <input id="profileMajsoulInput" placeholder="雀魂昵称或账号">
+              </label>
+            </div>
+            <div class="profile-actions">
+              <button id="saveProfileBtn" type="button">保存训练档案</button>
+              <button id="syncMajsoulBtn" class="secondary-btn" type="button">同步雀魂公开统计</button>
+            </div>
+            <p id="profileSaveStatus" class="hint"></p>
+            <div id="majsoulStatsBox" class="majsoul-stats"></div>
+          </section>
+          <section id="tenhouProfilePane" class="profile-pane hidden">
+            <div class="profile-grid single">
+              <label>
+                天凤 ID
+                <input id="profileTenhouInput" placeholder="天凤 ID">
+              </label>
+            </div>
+            <div class="profile-actions">
+              <button id="saveTenhouProfileBtn" type="button">保存天凤 ID</button>
+            </div>
+            <div class="empty-mini">天凤训练档案入口已预留。后续可以接入天凤牌谱统计、段位变化和近期对局走势。</div>
+          </section>
+        </section>
+
+        <section id="trendPanel" class="panel overview-panel">
+          <div class="section-head">
+            <div>
+              <h2>复盘趋势</h2>
+              <p class="hint">重复牌谱不会重复计入曲线。</p>
+            </div>
+            <span id="countLabel" class="count-label"></span>
+          </div>
+          <canvas id="trendCanvas" width="900" height="280"></canvas>
+          <div class="overview-stats">
+            <div><span>平均 rating</span><strong id="avgRating">--</strong></div>
+            <div><span>已分析</span><strong id="totalGames">0</strong></div>
+            <div><span>重点错题</span><strong id="markedTotal">0</strong></div>
+          </div>
+        </section>
+
+      </main>
+
+      <main id="libraryView" class="view library-view hidden">
+        <section class="panel library-panel">
+          <div class="section-head">
+            <div>
+              <h2>牌谱库</h2>
+              <p class="hint">每一份分析结果都会保存在这里，再次查看不需要重新提交。</p>
+            </div>
+            <span id="libraryCount" class="count-label"></span>
+          </div>
+          <div class="library-tools">
+            <input id="librarySearchInput" type="search" placeholder="搜索标题、牌谱链接、标签">
+            <select id="librarySortInput">
+              <option value="created_desc">最近分析</option>
+              <option value="rating_desc">rating 最高</option>
+              <option value="errors_desc">错误最多</option>
+              <option value="max_gap_desc">最大 Q 差</option>
+            </select>
+            <select id="libraryPlatformInput" aria-label="平台筛选">
+              <option value="majsoul">雀魂</option>
+              <option value="tenhou">天凤</option>
+            </select>
+          </div>
+          <div id="libraryList" class="library-list"></div>
+        </section>
+      </main>
+
+      <main id="reviewView" class="view review-view hidden">
+        <section class="review-toolbar">
+          <button id="backToLibraryBtn" class="secondary-btn" type="button">返回牌谱库</button>
+          <div>
+            <h2 id="reviewTitle">单谱复盘</h2>
+            <p id="reviewMeta" class="hint"></p>
+          </div>
+          <div class="toolbar-spacer"></div>
+          <select id="reviewLimitInput" aria-label="复盘范围">
+            <option value="9999" selected>全部错误</option>
+            <option value="5">Top 5 错误</option>
+            <option value="10">Top 10 错误</option>
+          </select>
+          <select id="errorJumpInput" aria-label="当前错误"></select>
+          <button id="markCurrentBtn" type="button">加入错题库</button>
+        </section>
+
+        <div class="review-workbench">
+        <section class="panel official-review-panel">
+          <iframe
+            id="reviewWebview"
+            class="review-webview"
+            title="MortalCoach 棋盘复盘">
+          </iframe>
+          <div id="reviewBrowserFallback" class="empty-state hidden">
+            当前环境不支持内嵌复盘窗口，请回到牌谱库稍后重试。
+          </div>
+        </section>
+
+        <aside class="panel review-inspector">
+          <div class="inspector-head">
+            <span>当前错误</span>
+            <strong id="inspectorRank">--</strong>
+          </div>
+          <h3 id="inspectorTitle">选择一个错误开始复盘</h3>
+          <p id="inspectorMeta" class="hint">Top5 / Top10 只是复盘范围，棋盘仍然是主视角。</p>
+          <div class="inspector-metrics">
+            <div><span>Q 差</span><strong id="inspectorQGap">--</strong></div>
+            <div><span>实际排名</span><strong id="inspectorActualRank">--</strong></div>
+            <div><span>复盘次数</span><strong id="inspectorReviewCount">0</strong></div>
+          </div>
+          <div class="decision-card">
+            <span>玩家选择</span>
+            <strong id="inspectorActual">--</strong>
+          </div>
+          <div class="decision-card mortal">
+            <span>Mortal 推荐</span>
+            <strong id="inspectorExpected">--</strong>
+          </div>
+          <label>
+            掌握状态
+            <select id="learningStatusInput">
+              <option value="new">未复盘</option>
+              <option value="mastered">已掌握</option>
+            </select>
+          </label>
+          <label>
+            复盘备注
+            <textarea id="learningNoteInput" class="note-input" placeholder="写下这手为什么错、下次看到什么信号要停手。"></textarea>
+          </label>
+          <div class="inspector-actions">
+            <button id="saveLearningBtn" type="button">保存备注</button>
+            <button id="reviewedOnceBtn" class="secondary-btn" type="button">复盘一次</button>
+          </div>
+          <p id="learningSaveStatus" class="hint"></p>
+        </aside>
+        </div>
+
+        <section class="review-grid">
+          <div class="panel board-panel">
+            <div class="board-stage">
+              <div class="review-board">
+                <div class="mahjong-table">
+                  <div class="wall wall-top"></div>
+                  <div class="wall wall-left"></div>
+                  <div class="wall wall-right"></div>
+                  <div class="center-box">
+                    <span id="boardRound">--</span>
+                    <strong id="boardGap">Q差 --</strong>
+                    <small id="boardRemain">剩余 --</small>
+                  </div>
+                  <div class="hand-row" id="boardHand"></div>
+                  <div class="decision-strip">
+                    <div><span>玩家</span><strong id="playerChoice">--</strong></div>
+                    <div><span>Mortal</span><strong id="mortalChoice">--</strong></div>
+                  </div>
+                </div>
+
+                <aside class="board-side">
+                  <div class="nav-grid">
+                    <button data-nav="prevRound" type="button">&lt; 上一局</button>
+                    <button data-nav="nextRound" type="button">下一局 &gt;</button>
+                    <button data-nav="prevError" type="button">&lt; 上一错误</button>
+                    <button data-nav="nextError" type="button">下一错误 &gt;</button>
+                    <button data-nav="prevTurn" type="button">&lt; 上一切牌</button>
+                    <button data-nav="nextTurn" type="button">下一切牌 &gt;</button>
+                    <button data-nav="back" type="button">&lt; 后退</button>
+                    <button data-nav="forward" type="button">前进 &gt;</button>
+                  </div>
+                  <table class="candidate-table">
+                    <thead>
+                      <tr><th>操作</th><th>Q</th><th>P</th></tr>
+                    </thead>
+                    <tbody id="candidateRows"></tbody>
+                  </table>
+                </aside>
+              </div>
+            </div>
+            <div class="board-copy">
+              <h3 id="boardErrorTitle">选择一个错误开始复盘</h3>
+              <p id="boardErrorDesc">这里会根据官方分析结果重建每一手的手牌、实际选择、Mortal 推荐和候选 Q/P。</p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <main id="mistakesView" class="view library-view hidden">
+        <section class="panel library-panel">
+          <div class="section-head">
+            <div>
+              <h2>重点错题库</h2>
+              <p class="hint">从单谱复盘中收藏的错误会聚合在这里。</p>
+            </div>
+            <span id="marksCount" class="count-label"></span>
+          </div>
+          <div id="marksList" class="errors-list"></div>
+        </section>
+      </main>
+    </section>
+  </div>
+
+  <section id="officialWorkspace" class="official-workspace hidden">
+    <div class="official-head">
+      <button id="closeOfficialWorkspace" class="secondary-btn" type="button">返回 MortalCoach</button>
+      <div>
+        <h2>官方 Mortal 分析窗口</h2>
+        <p id="embeddedOfficialStatus">准备打开官方 Mortal。</p>
+      </div>
+      <button id="saveOfficialWorkspaceBtn" type="button">保存当前结果</button>
+    </div>
+    <webview
+      id="officialWebview"
+      class="official-webview"
+      partition="persist:mortalcoach-official"
+      allowpopups>
+    </webview>
+  </section>
+
+  <script src="/app.js?v=51"></script>
+</body>
+</html>
